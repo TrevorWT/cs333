@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     mpz_init_set_ui(next_fib,1);
 
     result = sscanf(argv[1], "%d", &n);
+    
     if ((result == 0) || (n < 1)) {
         printf("Cannot calculate fibonacci value less than 1\n");
         exit(EXIT_FAILURE);
