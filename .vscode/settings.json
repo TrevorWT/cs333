@@ -4,6 +4,8 @@
         ".prettierrc": "json",
         "*.css": "css",
         "gmp.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c"
     }
 }
