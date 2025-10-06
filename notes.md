@@ -5,10 +5,10 @@
 
 ## Compress file
 ### Create
-    tar cvfa ${LOGNAME}_fib.tar.gz *.c
+    tar cvfa ${LOGNAME}_name.tar.gz *.[ch]
 
 ### Validate
-    tar tvfa ${LOGNAME}_fib.tar.gz
+    tar tvfa ${LOGNAME}_name.tar.gz
 
 ## New libraries
 ### gmp
