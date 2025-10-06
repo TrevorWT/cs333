@@ -1,0 +1,1 @@
+// adds a new record to the end of the binary file

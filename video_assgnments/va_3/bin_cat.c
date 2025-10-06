@@ -1,0 +1,1 @@
+// simply display the contents of the binary file

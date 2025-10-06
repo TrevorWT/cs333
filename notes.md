@@ -43,3 +43,9 @@
 - DPRINT / DEBUG — use: `DPRINT("fmt", ...)` (enable with `-DDEBUG`)
 
 - assert()
+
+## Get files
+### Symbolic links
+ln -s ~rchaney/Classes/cs333/VideoAssignments/data/v?.txt .
+### Copying
+cp -L ~rchaney/Classes/cs333/VideoAssignments/data/v?.txt .
