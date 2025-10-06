@@ -1,9 +1,10 @@
-// gcc -g -Wall -o vector vector.c
-// gcc -g -Wall -DNOISY_DEBUG -o vector vector.c
+// gcc -g -Wall -o ../target/vector vector.c
+// gcc -g -Wall -DNOISY_DEBUG -o ../target/vector_debug vector.c
 
 #include <stdio.h> // printf
 #include <stdlib.h> // exit status
 #include <unistd.h> // getopt
+#include <getopt.h>
 #include <string.h> // string functions
 
 #define OPTIONS "i:o:vh" // command line arguments: (i)nclude file, (o)utput file, (v)erbode, (h)elp
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
                 is_verbose = !is_verbose;
                 break;
             case 'h':
-                printf("get help");
+                printf("get help\n");
                 exit(EXIT_SUCCESS);
                 break;
             default:
