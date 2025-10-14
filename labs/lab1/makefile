@@ -6,11 +6,9 @@ CFLAGS = $(DEBUG) -Wall -Wextra -Wshadow -Wunreachable-code -Wredundant-decls \
 		-Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations \
 		-Wuninitialized -Werror $(DEFINES)
 
-PROG1 = main
-PROG2 =
-PROG3 =
-PROG4 =
-PROGS = $(PROG1) $(PROG2) $(PROG3) $(PROG4)
+PROG1 = cae-xor
+PROG2 = mystat
+PROGS = $(PROG1) $(PROG2)
 INCLUDES =
 
 all: $(PROGS)
@@ -19,6 +17,12 @@ $(PROG1): $(PROG1).o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(PROG1).o: $(PROG1).c $(INCLUDES)
+	$(CC) $(CFLAGS) -c $<
+
+$(PROG2): $(PROG2).o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(PROG2).o: $(PROG2).c $(INCLUDES)
 	$(CC) $(CFLAGS) -c $<
 
 clean cls:
