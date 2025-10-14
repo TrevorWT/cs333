@@ -11,6 +11,8 @@ PROG2 = mystat
 PROGS = $(PROG1) $(PROG2)
 INCLUDES =
 
+.PHONY: all clean
+
 all: $(PROGS)
 
 $(PROG1): $(PROG1).o
@@ -25,7 +27,7 @@ $(PROG2): $(PROG2).o
 $(PROG2).o: $(PROG2).c $(INCLUDES)
 	$(CC) $(CFLAGS) -c $<
 
-clean cls:
+clean:
 	rm -f $(PROGS) *.o *~ \#*
 
 tar:
