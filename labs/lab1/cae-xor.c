@@ -7,7 +7,7 @@
 
 static void usage(const char *prog) {
   fprintf(stderr,
-          "Usage: %s [-u] [-m message]\n"
+          "Usage: %s [-e|-d] [-c <str>] [-x <str>] [-h]\n"
           "  -e           encrypt plain text\n"
           "  -d           decrypt cipher text\n"
           "  -c [str]     encrytion string for ceasar cipher\n"
@@ -18,16 +18,25 @@ static void usage(const char *prog) {
 
 int main(int argc, char *argv[]) {
   int opt;
-  const char *msg = "Hello, world";
-  int uppercase = 0;
 
-  while ((opt = getopt(argc, argv, "m:uh")) != -1) {
+  while ((opt = getopt(argc, argv, "edc:x:h")) != -1) {
     switch (opt) {
-    case 'm':
-      msg = optarg;
+    case 'e':
       break;
-    case 'u':
-      uppercase = 1;
+    case 'd':
+      break;
+    case 'c':
+        if (optarg == NULL) {
+        fprintf(stderr, "option -c requires an argument\n");
+        usage(argv[0]);
+        return 1;
+      }
+      for (size_t i = 0; optarg[i] != '\0'; ++i) {
+        printf("%c\n", optarg[i]);
+      }
+      break;
+    case 'x':
+      printf("optarg = %s\n", optarg);
       break;
     case 'h':
       usage(argv[0]);
@@ -36,20 +45,6 @@ int main(int argc, char *argv[]) {
       usage(argv[0]);
       return 1;
     }
-  }
-
-  if (uppercase) {
-    char *buf = strdup(msg);
-    if (!buf) {
-      perror("strdup");
-      return 1;
-    }
-    for (char *p = buf; *p; ++p)
-      *p = (char)toupper((unsigned char)*p);
-    printf("%s\n", buf);
-    free(buf);
-  } else {
-    printf("%s\n", msg);
   }
 
   return 0;
