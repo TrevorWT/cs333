@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 static void usage(const char *prog) {
   fprintf(stderr,
@@ -18,6 +20,19 @@ static void usage(const char *prog) {
 
 int main(int argc, char *argv[]) {
   int opt;
+  char input[100];
+  ssize_t n;
+
+  write(STDOUT_FILENO, "Enter string: ", 15);
+  n = read(STDIN_FILENO, input, sizeof(input));
+
+  if (n > 0) {
+        for (ssize_t i = 0; i < n; ++i) {
+          write(STDOUT_FILENO, &input[i], 1);
+        }
+
+    }
+
 
   while ((opt = getopt(argc, argv, "edc:x:h")) != -1) {
     switch (opt) {
@@ -27,8 +42,8 @@ int main(int argc, char *argv[]) {
       break;
     case 'c':
         if (optarg == NULL) {
-        fprintf(stderr, "option -c requires an argument\n");
-        usage(argv[0]);
+          fprintf(stderr, "option -c requires an argument\n");
+          usage(argv[0]);
         return 1;
       }
       for (size_t i = 0; optarg[i] != '\0'; ++i) {
