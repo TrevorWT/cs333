@@ -1,13 +1,3 @@
-// cae_xor.c — single-pass Caesar+XOR stream cipher (encode/decode)
-// Usage:
-//   ./cae_xor -e [-c CAEKEY] [-x XORKEY]    # encode: Caesar -> XOR
-//   ./cae_xor -d [-c CAEKEY] [-x XORKEY]    # decode: XOR -> Caesar
-// Notes:
-//   - If a key is omitted, that stage is skipped.
-//   - Caesar applies ONLY to printable ASCII [32..126] and advances key
-//     position only when a byte is transformed.
-//   - XOR applies to ALL bytes and always advances its key position.
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
