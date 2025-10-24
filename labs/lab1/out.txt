@@ -18,3 +18,43 @@ File: mystat.c
   Last file access:         2025-10-14 21:03:57 +0000 (GMT) Tue (GMT)
   Last file modification:   2025-10-14 21:16:43 +0000 (GMT) Tue (GMT)
   Last status change:       2025-10-14 21:16:43 +0000 (GMT) Tue (GMT)
+File: out.txt
+  File type:                regular file
+  Device ID number:         91
+  I-node number:            4688675
+  Mode:                     -rw-------        (600 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                1061 bytes
+  Blocks allocated:         12
+  Last file access:         1761273976 (seconds since the epoch)
+  Last file modification:   1761273976 (seconds since the epoch)
+  Last status change:       1761273976 (seconds since the epoch)
+  Last file access:         2025-10-23 19:46:16 -0700 (PDT) Thu (local)
+  Last file modification:   2025-10-23 19:46:16 -0700 (PDT) Thu (local)
+  Last status change:       2025-10-23 19:46:16 -0700 (PDT) Thu (local)
+  Last file access:         2025-10-24 02:46:16 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 02:46:16 +0000 (GMT) Fri (GMT)
+  Last status change:       2025-10-24 02:46:16 +0000 (GMT) Fri (GMT)
+File: mystat
+  File type:                Symbolic link -> /u/rchaney/Classes/cs333/Labs/Lab1/mystat
+  Device ID number:         91
+  I-node number:            4692777
+  Mode:                     lrwxrwxrwx        (777 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                41 bytes
+  Blocks allocated:         1
+  Last file access:         1761274177 (seconds since the epoch)
+  Last file modification:   1761274177 (seconds since the epoch)
+  Last status change:       1761274177 (seconds since the epoch)
+  Last file access:         2025-10-23 19:49:37 -0700 (PDT) Thu (local)
+  Last file modification:   2025-10-23 19:49:37 -0700 (PDT) Thu (local)
+  Last status change:       2025-10-23 19:49:37 -0700 (PDT) Thu (local)
+  Last file access:         2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
+  Last status change:       2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
