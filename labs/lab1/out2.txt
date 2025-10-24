@@ -1,0 +1,100 @@
+File: test.c
+  File type:                regular file
+  Device ID number:         91
+  I-node number:            4696126
+  Mode:                     -rwx------        (700 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                3050 bytes
+  Blocks allocated:         12
+  Last file access:         1761333671 (seconds since the epoch)
+  Last file modification:   1761287503 (seconds since the epoch)
+  Last file change:         1761333671 (seconds since the epoch)
+  Last file access:         2025-10-24 12:21:11 -0700 (PDT) Fri (local)
+  Last file modification:   2025-10-23 23:31:43 -0700 (PDT) Thu (local)
+  Last file change:         2025-10-24 12:21:11 -0700 (PDT) Fri (local)
+  Last file access:         2025-10-24 19:21:11 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 06:31:43 +0000 (GMT) Fri (GMT)
+  Last file change:         2025-10-24 19:21:11 +0000 (GMT) Fri (GMT)
+File: mystat
+  File type:                regular file
+  Device ID number:         91
+  I-node number:            4692043
+  Mode:                     -rwx------        (700 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                21968 bytes
+  Blocks allocated:         22
+  Last file access:         1761335689 (seconds since the epoch)
+  Last file modification:   1761335689 (seconds since the epoch)
+  Last file change:         1761335689 (seconds since the epoch)
+  Last file access:         2025-10-24 12:54:49 -0700 (PDT) Fri (local)
+  Last file modification:   2025-10-24 12:54:49 -0700 (PDT) Fri (local)
+  Last file change:         2025-10-24 12:54:49 -0700 (PDT) Fri (local)
+  Last file access:         2025-10-24 19:54:49 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 19:54:49 +0000 (GMT) Fri (GMT)
+  Last file change:         2025-10-24 19:54:49 +0000 (GMT) Fri (GMT)
+File: fakelink
+  File type:                Symbolic link - with dangling destination
+  Device ID number:         91
+  I-node number:            4691421
+  Mode:                     lrwxrwxrwx        (777 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                10 bytes
+  Blocks allocated:         1
+  Last file access:         1761280634 (seconds since the epoch)
+  Last file modification:   1761280634 (seconds since the epoch)
+  Last file change:         1761280634 (seconds since the epoch)
+  Last file access:         2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file modification:   2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file change:         2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file access:         2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
+  Last file change:         2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
+File: example2.cae
+  File type:                regular file
+  Device ID number:         91
+  I-node number:            4705898
+  Mode:                     -rw-------        (600 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                33 bytes
+  Blocks allocated:         1
+  Last file access:         1761251971 (seconds since the epoch)
+  Last file modification:   1761251971 (seconds since the epoch)
+  Last file change:         1761251971 (seconds since the epoch)
+  Last file access:         2025-10-23 13:39:31 -0700 (PDT) Thu (local)
+  Last file modification:   2025-10-23 13:39:31 -0700 (PDT) Thu (local)
+  Last file change:         2025-10-23 13:39:31 -0700 (PDT) Thu (local)
+  Last file access:         2025-10-23 20:39:31 +0000 (GMT) Thu (GMT)
+  Last file modification:   2025-10-23 20:39:31 +0000 (GMT) Thu (GMT)
+  Last file change:         2025-10-23 20:39:31 +0000 (GMT) Thu (GMT)
+File: slink
+  File type:                Symbolic link -> /u/tthompso/classes/cs333/.gitignore
+  Device ID number:         91
+  I-node number:            4695079
+  Mode:                     lrwxrwxrwx        (777 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                16 bytes
+  Blocks allocated:         1
+  Last file access:         1761280634 (seconds since the epoch)
+  Last file modification:   1761280634 (seconds since the epoch)
+  Last file change:         1761280634 (seconds since the epoch)
+  Last file access:         2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file modification:   2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file change:         2025-10-23 21:37:14 -0700 (PDT) Thu (local)
+  Last file access:         2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
+  Last file modification:   2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
+  Last file change:         2025-10-24 04:37:14 +0000 (GMT) Fri (GMT)
