@@ -106,3 +106,17 @@ File: mystat
   Last file access:         Thu Oct 23 22:41:05 2025
   Last file modification:   Thu Oct 23 22:41:04 2025
   Last status change:       Thu Oct 23 22:41:04 2025
+File: mystat
+  File type:                regular file
+  Device ID number:         2080
+  I-node number:            147794
+  Mode:                     -rwxr-xr-x        (755 in octal)
+  Link count:               1
+  Owner Id:                 root              (UID = 0)
+  Group Id:                 root              (GID = 0)
+  Preferred I/O block size: 4096 bytes
+  File size:                21216 bytes
+  Blocks allocated:         48
+  Last file access:         Thu Oct 23 22:58:50 2025
+  Last file modification:   Thu Oct 23 22:58:46 2025
+  Last status change:       Thu Oct 23 22:58:46 2025
