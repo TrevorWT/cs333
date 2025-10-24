@@ -6,9 +6,13 @@
 #include <sys/sysmacros.h>
 #include <time.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 int main(int argc, char **argv) {
   struct stat sb;
+  struct passwd *pw;
+  struct group *gr;
 
   // printf("arg count: %i\n", argc);
 
@@ -54,10 +58,17 @@ int main(int argc, char **argv) {
           break;
       }
 
-      printf("I-node number:            %ju\n", (uintmax_t)sb.st_ino);
-      printf("Mode:                     %jo (octal)\n",(uintmax_t)sb.st_mode);
-      printf("Link count:               %ju\n", (uintmax_t)sb.st_nlink);
-      printf("Ownership:                UID=%ju   GID=%ju\n",(uintmax_t)sb.st_uid, (uintmax_t)sb.st_gid);
+      pw = getpwuid(sb.st_uid);
+      gr = getgrgid(sb.st_gid);
+      printf("  Device ID number:         %lu\n", (unsigned long)sb.st_dev);
+      printf("  I-node number:            %ju\n", (uintmax_t)sb.st_ino);
+      printf("  Mode:                     %jo (octal)\n",(uintmax_t)sb.st_mode);
+      printf("  Link count:               %ju\n", (uintmax_t)sb.st_nlink);
+
+      printf("  Owner Id:          %s     (UID = %ju)\n",pw->pw_name,(uintmax_t)sb.st_uid);
+      printf("  Group Id:          %s     (GID = %ju)\n",gr->gr_name,(uintmax_t)sb.st_gid);
+
+
       printf("Preferred I/O block size: %jd bytes\n",(intmax_t)sb.st_blksize);
       printf("File size:                %jd bytes\n",(intmax_t)sb.st_size);
       printf("Blocks allocated:         %jd\n", (intmax_t)sb.st_blocks);
