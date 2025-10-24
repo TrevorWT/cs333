@@ -39,22 +39,70 @@ File: out.txt
   Last file modification:   2025-10-24 02:46:16 +0000 (GMT) Fri (GMT)
   Last status change:       2025-10-24 02:46:16 +0000 (GMT) Fri (GMT)
 File: mystat
-  File type:                Symbolic link -> /u/rchaney/Classes/cs333/Labs/Lab1/mystat
-  Device ID number:         91
-  I-node number:            4692777
-  Mode:                     lrwxrwxrwx        (777 in octal)
+  File type:                regular file
+  Device ID number:         2080
+  I-node number:            147794
+  Mode:                     -rwxr-xr-x        (755 in octal)
   Link count:               1
-  Owner Id:                 tthompso          (UID = 3276)
-  Group Id:                 them              (GID = 300)
-  Preferred I/O block size: 1048576 bytes
-  File size:                41 bytes
-  Blocks allocated:         1
-  Last file access:         1761274177 (seconds since the epoch)
-  Last file modification:   1761274177 (seconds since the epoch)
-  Last status change:       1761274177 (seconds since the epoch)
-  Last file access:         2025-10-23 19:49:37 -0700 (PDT) Thu (local)
-  Last file modification:   2025-10-23 19:49:37 -0700 (PDT) Thu (local)
-  Last status change:       2025-10-23 19:49:37 -0700 (PDT) Thu (local)
-  Last file access:         2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
-  Last file modification:   2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
-  Last status change:       2025-10-24 02:49:37 +0000 (GMT) Fri (GMT)
+  Owner Id:                 root            (UID = 0)
+  Group Id:                 root            (GID = 0)
+  Preferred I/O block size: 4096 bytes
+  File size:                21296 bytes
+  Blocks allocated:         48
+  Last file access:         Thu Oct 23 22:34:14 2025
+  Last file modification:   Thu Oct 23 22:34:12 2025
+  Last status change:       Thu Oct 23 22:34:12 2025
+  Last file access:         Thu Oct 23 22:34:14 2025
+  Last file modification:   Thu Oct 23 22:34:12 2025
+  Last status change:       Thu Oct 23 22:34:12 2025
+  Last file access:         Thu Oct 23 22:34:14 2025
+  Last file modification:   Thu Oct 23 22:34:12 2025
+  Last status change:       Thu Oct 23 22:34:12 2025
+File: mystat
+  File type:                regular file
+  Device ID number:         2080
+  I-node number:            147794
+  Mode:                     -rwxr-xr-x      (755 in octal)
+  Mode:                     -rw-------        (600 in octal)
+
+  Link count:               1
+  Owner Id:                 root            (UID = 0)
+  Group Id:                 root            (GID = 0)
+  Preferred I/O block size: 4096 bytes
+  File size:                21296 bytes
+  Blocks allocated:         48
+  Last file access:         Thu Oct 23 22:40:00 2025
+  Last file modification:   Thu Oct 23 22:39:58 2025
+  Last status change:       Thu Oct 23 22:39:58 2025
+  Last file access:         Thu Oct 23 22:40:00 2025
+  Last file modification:   Thu Oct 23 22:39:58 2025
+  Last status change:       Thu Oct 23 22:39:58 2025
+  Last file access:         Thu Oct 23 22:40:00 2025
+  Last file modification:   Thu Oct 23 22:39:58 2025
+  Last status change:       Thu Oct 23 22:39:58 2025
+
+
+
+
+
+File: mystat
+  File type:                regular file
+  Device ID number:         2080
+  I-node number:            147794
+  Mode:                     -rwxr-xr-x        (755 in octal)
+  Mode:                     -rw-------        (600 in octal)
+  Link count:               1
+  Owner Id:                 root              (UID = 0)
+  Group Id:                 root              (GID = 0)
+  Preferred I/O block size: 4096 bytes
+  File size:                21296 bytes
+  Blocks allocated:         48
+  Last file access:         Thu Oct 23 22:41:05 2025
+  Last file modification:   Thu Oct 23 22:41:04 2025
+  Last status change:       Thu Oct 23 22:41:04 2025
+  Last file access:         Thu Oct 23 22:41:05 2025
+  Last file modification:   Thu Oct 23 22:41:04 2025
+  Last status change:       Thu Oct 23 22:41:04 2025
+  Last file access:         Thu Oct 23 22:41:05 2025
+  Last file modification:   Thu Oct 23 22:41:04 2025
+  Last status change:       Thu Oct 23 22:41:04 2025
