@@ -2,7 +2,7 @@
 # R Jesse Chaney
 # rchaney@pdx.edu
 #FILES=$(seq 1 3 12)
-FILES="1 3 5 12"
+FILES="1 2 3 4 5 6 7 8 9 10 11 12"
 
 PROG1=cae-xor
 LAB=Lab1

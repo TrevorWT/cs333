@@ -1,0 +1,20 @@
+File: mystat.c
+  File type:                regular file
+  Device ID number:         91
+  I-node number:            1036171
+  Mode:                     -rw-------        (600 in octal)
+  Link count:               1
+  Owner Id:                 tthompso          (UID = 3276)
+  Group Id:                 them              (GID = 300)
+  Preferred I/O block size: 1048576 bytes
+  File size:                72 bytes
+  Blocks allocated:         1
+  Last file access:         1760475837 (seconds since the epoch)
+  Last file modification:   1760476603 (seconds since the epoch)
+  Last status change:       1760476603 (seconds since the epoch)
+  Last file access:         2025-10-14 14:03:57 -0700 (PDT) Tue (local)
+  Last file modification:   2025-10-14 14:16:43 -0700 (PDT) Tue (local)
+  Last status change:       2025-10-14 14:16:43 -0700 (PDT) Tue (local)
+  Last file access:         2025-10-14 21:03:57 +0000 (GMT) Tue (GMT)
+  Last file modification:   2025-10-14 21:16:43 +0000 (GMT) Tue (GMT)
+  Last status change:       2025-10-14 21:16:43 +0000 (GMT) Tue (GMT)
