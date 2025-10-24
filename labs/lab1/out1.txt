@@ -29,8 +29,8 @@ File: /u/rchaney/Classes/cs333/Labs/Lab1/FUNNYdir
   Preferred I/O block size: 1048576 bytes
   File size:                2 bytes
   Blocks allocated:         1
-  Last file access:         945071939 (seconds since the epoch)
-  Last file modification:   945071939 (seconds since the epoch)
+  Last file access:          945071939 (seconds since the epoch)
+  Last file modification:    945071939 (seconds since the epoch)
   Last status change:       1760462038 (seconds since the epoch)
   Last file access:         1999-12-12 23:58:59 -0800 (PST) Sun (local)
   Last file modification:   1999-12-12 23:58:59 -0800 (PST) Sun (local)
@@ -62,15 +62,15 @@ File: /u/rchaney/Classes/cs333/Labs/Lab1/FUNNYnoaccess
   File type:                regular file
   Device ID number:         97
   I-node number:            2880656
-  Mode:                     ----------        (0 in octal)
+  Mode:                     ----------        (000 in octal)
   Link count:               1
   Owner Id:                 rchaney           (UID = 18781)
   Group Id:                 them              (GID = 300)
   Preferred I/O block size: 1048576 bytes
   File size:                0 bytes
   Blocks allocated:         1
-  Last file access:         344862186 (seconds since the epoch)
-  Last file modification:   344862186 (seconds since the epoch)
+  Last file access:          344862186 (seconds since the epoch)
+  Last file modification:    344862186 (seconds since the epoch)
   Last status change:       1760462038 (seconds since the epoch)
   Last file access:         1980-12-05 03:03:06 -0800 (PST) Fri (local)
   Last file modification:   1980-12-05 03:03:06 -0800 (PST) Fri (local)
@@ -89,8 +89,8 @@ File: /u/rchaney/Classes/cs333/Labs/Lab1/FUNNYpipe
   Preferred I/O block size: 1048576 bytes
   File size:                0 bytes
   Blocks allocated:         1
-  Last file access:         263537459 (seconds since the epoch)
-  Last file modification:   263537459 (seconds since the epoch)
+  Last file access:          263537459 (seconds since the epoch)
+  Last file modification:    263537459 (seconds since the epoch)
   Last status change:       1760462038 (seconds since the epoch)
   Last file access:         1978-05-08 21:50:59 -0700 (PDT) Mon (local)
   Last file modification:   1978-05-08 21:50:59 -0700 (PDT) Mon (local)
@@ -139,7 +139,7 @@ File: /u/rchaney/Classes/cs333/Labs/Lab1/FUNNYsocket
   Last file modification:   1953-01-01 23:32:57 +0000 (GMT) Thu (GMT)
   Last status change:       2025-10-14 17:13:58 +0000 (GMT) Tue (GMT)
 File: /u/rchaney/Classes/cs333/Labs/Lab1/FUNNYsymlink
-  File type:                Symbolic link - with dangling destination
+  File type:                Symbolic link -> ./FUNNYregfile
   Device ID number:         97
   I-node number:            2880017
   Mode:                     lrwxrwxrwx        (777 in octal)

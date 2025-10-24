@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
         ssize_t len = readlink(argv[i], link_target, sizeof(link_target) - 1);
         mode_str[0] = 'l';
         if (len != -1) link_target[len] = '\0';
-        if (realpath(link_target, resolved_target) != NULL) printf("Symbolic link -> %s\n", resolved_target);
+        if (realpath(link_target, resolved_target) != NULL) printf("Symbolic link -> %s\n", link_target);
         else printf("Symbolic link - with dangling destination\n");
         break;
       }
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
       printf("  %-26s%lu\n", "Device ID number:", (unsigned long)sb.st_dev);
       printf("  %-26s%ju\n", "I-node number:", (uintmax_t)sb.st_ino);
-      printf("  %-26s%-18s(%jo in octal)\n", "Mode:", mode_str, (uintmax_t)(sb.st_mode & 0777));
+      printf("  %-26s%-18s(%03jo in octal)\n", "Mode:", mode_str, (uintmax_t)(sb.st_mode & 0777));
       printf("  %-26s%ju\n", "Link count:", (uintmax_t)sb.st_nlink);
       printf("  %-26s%-18s(UID = %ju)\n", "Owner Id:", pw->pw_name, (uintmax_t)sb.st_uid);
       printf("  %-26s%-18s(GID = %ju)\n", "Group Id:", gr->gr_name, (uintmax_t)sb.st_gid);
@@ -102,9 +102,15 @@ int main(int argc, char **argv) {
       printf("  %-26s%jd\n", "Blocks allocated:", (intmax_t)sb.st_blocks);
 
       // Time
-      printf("  %-26s%ld (seconds since the epoch)\n","Last file access:",(long)sb.st_atime);
-      printf("  %-26s%ld (seconds since the epoch)\n","Last file modification:",(long)sb.st_mtime);
-      printf("  %-26s%ld (seconds since the epoch)\n","Last file change:",(long)sb.st_ctime);
+
+      printf("  Last file access: ");
+      printf("%8s%10ld (seconds since the epoch)\n", "", (long)sb.st_atime);
+
+      printf("  Last file modification: ");
+      printf("%2s%10ld (seconds since the epoch)\n", "", (long)sb.st_mtime);
+
+      printf("  Last status change: ");
+      printf("%6s%10ld (seconds since the epoch)\n", "", (long)sb.st_ctime);
 
 
       strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z (%Z) %a (local)", localtime(&sb.st_atime));
@@ -114,7 +120,7 @@ int main(int argc, char **argv) {
         printf("  %-26s%s\n", "Last file modification:", buffer);
 
       strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z (%Z) %a (local)", localtime(&sb.st_ctime));
-        printf("  %-26s%s\n", "Last file change:", buffer);
+        printf("  %-26s%s\n", "Last status change:", buffer);
 
       strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z (%Z) %a (GMT)", gmtime(&sb.st_atime));
         printf("  %-26s%s\n", "Last file access:", buffer);
@@ -123,7 +129,7 @@ int main(int argc, char **argv) {
         printf("  %-26s%s\n", "Last file modification:", buffer);
 
       strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S %z (%Z) %a (GMT)", gmtime(&sb.st_ctime));
-        printf("  %-26s%s\n", "Last file change:", buffer);
+        printf("  %-26s%s\n", "Last status change:", buffer);
 
     }
   }
