@@ -1,1 +1,0 @@
-/u/rchaney/Classes/cs333/Labs/Lab1/mk_funny.bash

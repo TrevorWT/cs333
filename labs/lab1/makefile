@@ -27,9 +27,6 @@ $(PROG2): $(PROG2).o
 $(PROG2).o: $(PROG2).c $(INCLUDES)
 	$(CC) $(CFLAGS) -c $<
 
-
-
-
 clean:
 	rm -f $(PROGS) *.o *~ \#*
 
