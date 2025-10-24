@@ -31,4 +31,4 @@ clean:
 	rm -f $(PROGS) *.o *~ \#*
 
 tar:
-	tar cvfa ${LOGNAME}_lab1.tar.gz *.[ch] [mM]akefil
+	tar cvfa ${LOGNAME}_lab1.tar.gz *.[ch] [mM]akefile
