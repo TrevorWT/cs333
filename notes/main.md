@@ -1,5 +1,8 @@
 # Notes
 
+~rchaney/Classes/cs333/VideoAssignments
+~rchaney/Classes/cs333/Labs
+
 ## Compile C code
     gcc -Wall file.c -o ../target/outputName
 
