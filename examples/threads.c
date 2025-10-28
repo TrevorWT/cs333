@@ -10,7 +10,9 @@
 static void *thread_main(void *arg) {
   // Each worker prints its identifier and exits immediately.
   intptr_t id = (intptr_t)arg;
-  printf("Thread %ld says hello!\n", (long)id);
+  pthread_t self = pthread_self();
+  printf("Thread %ld (pthread_t=%lu) says hello!\n", (long)id,
+         (unsigned long)self);
   return NULL;
 }
 
