@@ -3,6 +3,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <md4.h>
+#include "header.h" // replace in final 
 
 // Useage: arvik-md4 <options> [-f archive-file] [member [...]]
 // Exactly one of -x, -c, -t, or -V must be present.
