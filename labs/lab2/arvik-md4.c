@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <pwd.h>
+#include <grp.h>
 #include "header.h" // replace in final
 
 // -rw-rw-r--
@@ -297,34 +299,62 @@ static int tableOfContents(int inFd, bool verbose){
 		// Parse file size
 		fileSize = atol(hdr.arvik_size);
 
+		// Skip over file data (need to do this before reading footer)
+		if (lseek(inFd, fileSize, SEEK_CUR) < 0) {
+			perror("lseek data");
+			return TOC_FAIL;
+		}
+
+		// Read footer to get MD4 checksums
+		n = read(inFd, &ftr, sizeof(ftr));
+		if (n < (ssize_t)sizeof(ftr)) {
+			fprintf(stderr, "Incomplete footer\n");
+			return TOC_FAIL;
+		}
+
 		// Print the entry (verbose or short format)
 		if (verbose) {
-			// Long format: mode uid gid size date filename
+			// Long format: detailed multi-line output
 			time_t mtime = atol(hdr.arvik_date);
 			struct tm *tm = localtime(&mtime);
 			char dateStr[32];
 			mode_t mode = strtol(hdr.arvik_mode, NULL, 8);
 			uid_t uid = atoi(hdr.arvik_uid);
 			gid_t gid = atoi(hdr.arvik_gid);
+			char modeStr[10];
+			struct passwd *pw;
+			struct group *gr;
 
 			strftime(dateStr, sizeof(dateStr), "%b %e %R %Y", tm);
-			printf("%06o %5d %5d %8ld %s %s\n", mode, uid, gid, (long)fileSize, dateStr, filename);
+
+			// Convert mode to rwx format
+			modeStr[0] = (mode & S_IRUSR) ? 'r' : '-';
+			modeStr[1] = (mode & S_IWUSR) ? 'w' : '-';
+			modeStr[2] = (mode & S_IXUSR) ? 'x' : '-';
+			modeStr[3] = (mode & S_IRGRP) ? 'r' : '-';
+			modeStr[4] = (mode & S_IWGRP) ? 'w' : '-';
+			modeStr[5] = (mode & S_IXGRP) ? 'x' : '-';
+			modeStr[6] = (mode & S_IROTH) ? 'r' : '-';
+			modeStr[7] = (mode & S_IWOTH) ? 'w' : '-';
+			modeStr[8] = (mode & S_IXOTH) ? 'x' : '-';
+			modeStr[9] = '\0';
+
+			// Look up username and group name
+			pw = getpwuid(uid);
+			gr = getgrgid(gid);
+
+			printf("file name: %s\n", filename);
+			printf("    mode:       %s\n", modeStr);
+			printf("    uid:         %8d  %s\n", uid, pw ? pw->pw_name : "unknown");
+			printf("    gid:         %8d  %s\n", gid, gr ? gr->gr_name : "unknown");
+			printf("    size:        %8ld  bytes\n", (long)fileSize);
+			printf("    mtime:      %s\n", dateStr);
+			printf("    header md4: %.32s\n", ftr.md4sum_header);
+			printf("    data md4:   %.32s\n", ftr.md4sum_data);
+			printf("\n");
 		} else {
 			// Short format: just filename
 			printf("%s\n", filename);
-		}
-
-		// Skip over file data
-		if (lseek(inFd, fileSize, SEEK_CUR) < 0) {
-			perror("lseek data");
-			return TOC_FAIL;
-		}
-
-		// Skip over footer
-		n = read(inFd, &ftr, sizeof(ftr));
-		if (n < (ssize_t)sizeof(ftr)) {
-			fprintf(stderr, "Incomplete footer\n");
-			return TOC_FAIL;
 		}
 	}
 
