@@ -351,7 +351,6 @@ static int tableOfContents(int inFd, bool verbose){
 			printf("    mtime:      %s\n", dateStr);
 			printf("    header md4: %.32s\n", ftr.md4sum_header);
 			printf("    data md4:   %.32s\n", ftr.md4sum_data);
-			printf("\n");
 		} else {
 			// Short format: just filename
 			printf("%s\n", filename);
