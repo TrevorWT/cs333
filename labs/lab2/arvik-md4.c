@@ -360,44 +360,6 @@ static int tableOfContents(int inFd, bool verbose){
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int main(int argc, char *argv[]) {
   int opt;
 	bool extract = false;
