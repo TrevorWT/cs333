@@ -124,14 +124,26 @@ static int createArchive(int outFd, int memberCount, char **members, bool verbos
 		nameLen = strlen(filename);
 
 		if (nameLen > ARVIK_NAME_LEN - 1) nameLen = ARVIK_NAME_LEN - 1;
-		memcpy(hdr.arvik_name, filename, nameLen); // Member file name
-		hdr.arvik_name[nameLen] = ARVIK_NAME_TERM; // Null terminator
-		snprintf(hdr.arvik_date, sizeof(hdr.arvik_date), "%ld", st.st_mtime); // Date (decimal)
-		snprintf(hdr.arvik_uid, sizeof(hdr.arvik_uid), "%d", st.st_uid); // UID (decimal)
-		snprintf(hdr.arvik_gid, sizeof(hdr.arvik_gid), "%d", st.st_gid); // GID (decimal)
-		snprintf(hdr.arvik_mode, sizeof(hdr.arvik_mode), "%o", st.st_mode); // Mode (octal)
-		snprintf(hdr.arvik_size, sizeof(hdr.arvik_size), "%ld", st.st_size); // Size (decimal)
-		memcpy(hdr.arvik_term, ARVIK_TERM, sizeof(hdr.arvik_term)); // Terminator
+		memcpy(hdr.arvik_name, filename, nameLen);
+		hdr.arvik_name[nameLen] = ARVIK_NAME_TERM;
+
+		/* Write numbers directly, then clear the null terminator */
+		sprintf(hdr.arvik_date, "%ld", st.st_mtime);
+		hdr.arvik_date[strlen(hdr.arvik_date)] = ' ';
+
+		sprintf(hdr.arvik_uid, "%d", st.st_uid);
+		hdr.arvik_uid[strlen(hdr.arvik_uid)] = ' ';
+
+		sprintf(hdr.arvik_gid, "%d", st.st_gid);
+		hdr.arvik_gid[strlen(hdr.arvik_gid)] = ' ';
+
+		sprintf(hdr.arvik_mode, "%o", st.st_mode);
+		hdr.arvik_mode[strlen(hdr.arvik_mode)] = ' ';
+
+		sprintf(hdr.arvik_size, "%ld", st.st_size);
+		hdr.arvik_size[strlen(hdr.arvik_size)] = ' ';
+
+		memcpy(hdr.arvik_term, ARVIK_TERM, sizeof(hdr.arvik_term));
 
 		MD4Init(&ctx_hdr);
 		MD4Update(&ctx_hdr, (unsigned char*)&hdr, sizeof(hdr));
