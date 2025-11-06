@@ -32,14 +32,14 @@ static int tableOfContents(int inFd, bool verbose);
 
 static void usage(const char *prog) {
 	fprintf(stderr,
-		"Usage: %s [-h] [-v] [-f archive] [-x | -c | -t | -V] [member...]\n"
-		"  -x           Extract members from arvik file.\n"
-		"  -c           Create an arvik style archive file.\n"
-		"  -t           Show table of contents.\n"
-		"  -h           Show the help text and exit.\n"
-		"  -v           Verbose processing.\n"
-		"  -V           Validate the md4 value for header and data.\n"
-		"  -f <file>    Specify the name of the arvik file on which to operate.\n",
+		"Usage: %s -[cxtvVf:h] archive-file file...\n"
+		"\t-c           create a new archive file\n"
+		"\t-x           extract members from an existing archive file\n"
+		"\t-t           show the table of contents of archive file\n"
+		"\t-f filename  name of archive file to use\n"
+		"\t-V           Validate the md4 values for the header and data\n"
+		"\t-v           verbose output\n"
+		"\t-h           show help text\n",
 		prog);
 
 	exit(EXIT_SUCCESS);
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
 			archiveFile = optarg;
 			break;
 		default:
-			die(INVALID_CMD_OPTION, "Invalid option\n");
+			die(INVALID_CMD_OPTION, "Usage: ./arvik-md4 cxtvVf:h\n");
 		}
 	}
 
