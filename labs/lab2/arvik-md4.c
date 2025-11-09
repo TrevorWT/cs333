@@ -31,6 +31,8 @@ static int createArchive(int outFd, int memberCount, char **members, bool verbos
 static int openArchiveForWrite(const char *path);
 static int openArchiveForRead(const char *path);
 static int tableOfContents(int inFd, bool verbose);
+static int extractArchive(int inFd, bool verbose);
+static int validateArchive(int inFd);
 
 static void usage(const char *prog) {
 	fprintf(stderr,
@@ -360,6 +362,255 @@ static int tableOfContents(int inFd, bool verbose){
 	return 0;
 }
 
+static int extractArchive(int inFd, bool verbose) {
+	char tag[11];  // Buffer for ARVIK_TAG (10 bytes + null terminator)
+	ssize_t n;
+
+	// Step 3: Read and verify the tag
+	n = read(inFd, tag, strlen(ARVIK_TAG));
+	if (n < (ssize_t)strlen(ARVIK_TAG)) {
+		if (n == 0) {
+			fprintf(stderr, "Empty archive\n");
+		} else {
+			fprintf(stderr, "Incomplete archive tag\n");
+		}
+		return EXTRACT_FAIL;
+	}
+
+	if (memcmp(tag, ARVIK_TAG, strlen(ARVIK_TAG)) != 0) {
+		fprintf(stderr, "Bad archive tag\n");
+		return BAD_TAG;
+	}
+
+	// Step 4: Main loop to process all members
+	while (1) {
+		arvik_header_t hdr;
+		arvik_footer_t ftr;
+		char filename[ARVIK_NAME_LEN + 1];
+		off_t fileSize;
+		mode_t mode;
+		time_t mtime;
+		int outFd;
+		int i;
+		unsigned char buf[4096];
+		off_t remaining;
+		struct timespec times[2];
+
+		// Step 5: Read and parse header
+		n = read(inFd, &hdr, sizeof(hdr));
+		if (n == 0) {
+			// End of archive - normal exit
+			break;
+		}
+		if (n < (ssize_t)sizeof(hdr)) {
+			fprintf(stderr, "Incomplete header\n");
+			return EXTRACT_FAIL;
+		}
+
+		// Verify header terminator
+		if (memcmp(hdr.arvik_term, ARVIK_TERM, sizeof(hdr.arvik_term)) != 0) {
+			fprintf(stderr, "Bad header terminator\n");
+			return EXTRACT_FAIL;
+		}
+
+		// Extract filename (space-padded, terminated with '<')
+		for (i = 0; i < ARVIK_NAME_LEN && hdr.arvik_name[i] != ARVIK_NAME_TERM; i++) {
+			filename[i] = hdr.arvik_name[i];
+		}
+		filename[i] = '\0';
+
+		// Parse file size, mode, and mtime
+		fileSize = atol(hdr.arvik_size);
+		mode = strtol(hdr.arvik_mode, NULL, 8);
+		mtime = atol(hdr.arvik_date);
+
+		// Step 6: Create output file
+		outFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, mode);
+		if (outFd < 0) {
+			perror(filename);
+			// Skip this file's data and footer
+			if (lseek(inFd, fileSize + sizeof(arvik_footer_t), SEEK_CUR) < 0) {
+				perror("lseek");
+				return EXTRACT_FAIL;
+			}
+			continue;
+		}
+
+		// Step 7: Extract file data
+		remaining = fileSize;
+		while (remaining > 0) {
+			size_t toRead = (remaining > (off_t)sizeof(buf)) ? sizeof(buf) : (size_t)remaining;
+			n = read(inFd, buf, toRead);
+			if (n <= 0) {
+				if (n < 0) perror("read data");
+				else fprintf(stderr, "Unexpected EOF\n");
+				close(outFd);
+				return EXTRACT_FAIL;
+			}
+			if (writeAll(outFd, buf, (size_t)n) < 0) {
+				perror("write extracted data");
+				close(outFd);
+				return EXTRACT_FAIL;
+			}
+			remaining -= n;
+		}
+
+		// Step 8: Restore file metadata
+		// Set permissions (in case umask interfered)
+		if (fchmod(outFd, mode) < 0) {
+			perror("fchmod");
+		}
+
+		// Set modification time
+		times[0].tv_sec = mtime;  // atime
+		times[0].tv_nsec = 0;
+		times[1].tv_sec = mtime;  // mtime
+		times[1].tv_nsec = 0;
+		if (futimens(outFd, times) < 0) {
+			perror("futimens");
+		}
+
+		close(outFd);
+
+		// Step 9: Read and skip footer
+		n = read(inFd, &ftr, sizeof(ftr));
+		if (n < (ssize_t)sizeof(ftr)) {
+			fprintf(stderr, "Incomplete footer\n");
+			return EXTRACT_FAIL;
+		}
+
+		// Step 10: Verbose output
+		if (verbose) {
+			fprintf(stderr, "extracted %s\n", filename);
+		}
+	}
+
+	return 0;
+}
+
+static int validateArchive(int inFd) {
+	char tag[11];
+	ssize_t n;
+	bool allValid = true;
+
+	// Read and verify the tag
+	n = read(inFd, tag, strlen(ARVIK_TAG));
+	if (n < (ssize_t)strlen(ARVIK_TAG)) {
+		if (n == 0) {
+			fprintf(stderr, "Empty archive\n");
+		} else {
+			fprintf(stderr, "Incomplete archive tag\n");
+		}
+		return MD4_ERROR;
+	}
+
+	if (memcmp(tag, ARVIK_TAG, strlen(ARVIK_TAG)) != 0) {
+		fprintf(stderr, "Bad archive tag\n");
+		return BAD_TAG;
+	}
+
+	// Loop through members
+	while (1) {
+		arvik_header_t hdr;
+		arvik_footer_t ftr;
+		char filename[ARVIK_NAME_LEN + 1];
+		off_t fileSize;
+		int i;
+		unsigned char buf[4096];
+		off_t remaining;
+		MD4_CTX ctx_hdr;
+		unsigned char md4_hdr_bin[MD4_DIGEST_LENGTH];
+		char md4_hdr_hex[MD4_DIGEST_LENGTH * 2];
+		MD4_CTX ctx_data;
+		unsigned char md4_data_bin[MD4_DIGEST_LENGTH];
+		char md4_data_hex[MD4_DIGEST_LENGTH * 2];
+		bool headerValid;
+		bool dataValid;
+
+		// Try to read a header
+		n = read(inFd, &hdr, sizeof(hdr));
+		if (n == 0) {
+			// End of archive - normal exit
+			break;
+		}
+		if (n < (ssize_t)sizeof(hdr)) {
+			fprintf(stderr, "Incomplete header\n");
+			return MD4_ERROR;
+		}
+
+		// Verify header terminator
+		if (memcmp(hdr.arvik_term, ARVIK_TERM, sizeof(hdr.arvik_term)) != 0) {
+			fprintf(stderr, "Bad header terminator\n");
+			return MD4_ERROR;
+		}
+
+		// Extract filename
+		for (i = 0; i < ARVIK_NAME_LEN && hdr.arvik_name[i] != ARVIK_NAME_TERM; i++) {
+			filename[i] = hdr.arvik_name[i];
+		}
+		filename[i] = '\0';
+
+		// Parse file size
+		fileSize = atol(hdr.arvik_size);
+
+		// Compute MD4 of header
+		MD4Init(&ctx_hdr);
+		MD4Update(&ctx_hdr, (unsigned char*)&hdr, sizeof(hdr));
+		MD4Final(md4_hdr_bin, &ctx_hdr);
+
+		// Convert to hex
+		for (i = 0; i < MD4_DIGEST_LENGTH; i++) {
+			static const char hex[] = "0123456789abcdef";
+			md4_hdr_hex[i * 2] = hex[(md4_hdr_bin[i] >> 4) & 0xF];
+			md4_hdr_hex[i * 2 + 1] = hex[md4_hdr_bin[i] & 0xF];
+		}
+
+		// Compute MD4 of data
+		MD4Init(&ctx_data);
+		remaining = fileSize;
+		while (remaining > 0) {
+			size_t toRead = (remaining > (off_t)sizeof(buf)) ? sizeof(buf) : (size_t)remaining;
+			n = read(inFd, buf, toRead);
+			if (n <= 0) {
+				if (n < 0) perror("read data");
+				else fprintf(stderr, "Unexpected EOF\n");
+				return MD4_ERROR;
+			}
+			MD4Update(&ctx_data, buf, (size_t)n);
+			remaining -= n;
+		}
+		MD4Final(md4_data_bin, &ctx_data);
+
+		// Convert to hex
+		for (i = 0; i < MD4_DIGEST_LENGTH; i++) {
+			static const char hex[] = "0123456789abcdef";
+			md4_data_hex[i * 2] = hex[(md4_data_bin[i] >> 4) & 0xF];
+			md4_data_hex[i * 2 + 1] = hex[md4_data_bin[i] & 0xF];
+		}
+
+		// Read footer
+		n = read(inFd, &ftr, sizeof(ftr));
+		if (n < (ssize_t)sizeof(ftr)) {
+			fprintf(stderr, "Incomplete footer\n");
+			return MD4_ERROR;
+		}
+
+		// Compare checksums
+		headerValid = (memcmp(md4_hdr_hex, ftr.md4sum_header, MD4_DIGEST_LENGTH * 2) == 0);
+		dataValid = (memcmp(md4_data_hex, ftr.md4sum_data, MD4_DIGEST_LENGTH * 2) == 0);
+
+		printf("%s\n", filename);
+		printf("    header: %s\n", headerValid ? "VALID" : "INVALID");
+		printf("    data:   %s\n", dataValid ? "VALID" : "INVALID");
+
+		if (!headerValid || !dataValid) {
+			allValid = false;
+		}
+	}
+
+	return allValid ? 0 : MD4_ERROR;
+}
+
 int main(int argc, char *argv[]) {
   int opt;
 	bool extract = false;
@@ -431,6 +682,27 @@ int main(int argc, char *argv[]) {
 		return (rc == 0) ? EXIT_SUCCESS : rc;
 	}
 
+	if (extract) {
+		int inFd = openArchiveForRead(archiveFile);
+		int rc;
+
+		if (inFd < 0) return EXTRACT_FAIL;
+		rc = extractArchive(inFd, verbose);
+
+		if (archiveFile && inFd >= 0) close(inFd);
+		return (rc == 0) ? EXIT_SUCCESS : rc;
+	}
+
+	if (validate) {
+		int inFd = openArchiveForRead(archiveFile);
+		int rc;
+
+		if (inFd < 0) return MD4_ERROR;
+		rc = validateArchive(inFd);
+
+		if (archiveFile && inFd >= 0) close(inFd);
+		return (rc == 0) ? EXIT_SUCCESS : rc;
+	}
 
 exit(EXIT_SUCCESS);
 }
