@@ -35,7 +35,7 @@ static int extractArchive(int inFd, bool verbose);
 static int validateArchive(int inFd);
 
 static void usage(const char *prog) {
-	fprintf(stderr,
+	fprintf(stdout,
 		"Usage: %s -[cxtvVf:h] archive-file file...\n"
 		"\t-c           create a new archive file\n"
 		"\t-x           extract members from an existing archive file\n"
@@ -601,7 +601,7 @@ static int validateArchive(int inFd) {
 
 		printf("%s\n", filename);
 		printf("    header: %s\n", headerValid ? "VALID" : "INVALID");
-		printf("    data:   %s\n", dataValid ? "VALID" : "INVALID");
+		printf("    data:   %s\n\n", dataValid ? "VALID" : "INVALID");
 
 		if (!headerValid || !dataValid) {
 			allValid = false;
