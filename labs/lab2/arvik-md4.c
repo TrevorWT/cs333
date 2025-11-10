@@ -13,16 +13,12 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#include "arvik.h" // replace in final
+#include "arvik.h"
 
 // -rw-rw-r--
 #ifndef ARVIK_CREATE_MODE
 #  define ARVIK_CREATE_MODE 0664
 #endif
-
-// Usage: arvik-md4 <options> [-f archive-file] [member [...]]
-// Exactly one of -x, -c, -t, or -V must be present.
-// member... are optional filenames (for -c).
 
 static void usage(const char *prog);
 static void die(int code, const char *msg);
@@ -202,6 +198,14 @@ static int createArchive(int outFd, int memberCount, char **members, bool verbos
 
 		close(memberFd);
 
+		// Add padding newline for odd-sized files
+		if (st.st_size % 2 == 1) {
+			if (writeAll(outFd, "\n", 1) < 0) {
+				perror("write padding");
+				return CREATE_FAIL;
+			}
+		}
+
 		memcpy(ftr.md4sum_header, md4_hdr_hex, MD4_DIGEST_LENGTH * 2); // Header MD4 checksum
 		memcpy(ftr.md4sum_data, md4_data_hex, MD4_DIGEST_LENGTH * 2); // Data MD4 checksum
 		memcpy(ftr.arvik_term, ARVIK_TERM, sizeof(ftr.arvik_term)); // Terminator
@@ -257,6 +261,7 @@ static int openArchiveForRead(const char *path) {
 static int tableOfContents(int inFd, bool verbose){
 	char tag[11];  // ARVIK_TAG is 10 bytes + null terminator for safety
 	ssize_t n;
+	unsigned char buf[4096];
 
 	// Read and verify the tag
 	n = read(inFd, tag, strlen(ARVIK_TAG));
@@ -279,6 +284,7 @@ static int tableOfContents(int inFd, bool verbose){
 		arvik_header_t hdr;
 		arvik_footer_t ftr;
 		off_t fileSize;
+		off_t remaining;
 		char filename[ARVIK_NAME_LEN + 1];
 		int i;
 
@@ -308,10 +314,31 @@ static int tableOfContents(int inFd, bool verbose){
 		// Parse file size
 		fileSize = atol(hdr.arvik_size);
 
-		// Skip over file data (need to do this before reading footer)
-		if (lseek(inFd, fileSize, SEEK_CUR) < 0) {
-			perror("lseek data");
-			return TOC_FAIL;
+		// Consume the member data so stdin (non-seekable) works too
+		remaining = fileSize;
+		while (remaining > 0) {
+			size_t chunk = remaining > (off_t)sizeof(buf) ? sizeof(buf) : (size_t)remaining;
+			n = read(inFd, buf, chunk);
+			if (n < 0) {
+				if (errno == EINTR) continue;
+				perror("read data");
+				return TOC_FAIL;
+			}
+			if (n == 0) {
+				fprintf(stderr, "Unexpected EOF while reading data for %s\n", filename);
+				return TOC_FAIL;
+			}
+			remaining -= n;
+		}
+
+		// Consume padding newline for odd-sized files
+		if (fileSize % 2 == 1) {
+			char padding;
+			n = read(inFd, &padding, 1);
+			if (n < 1) {
+				fprintf(stderr, "Expected padding after data\n");
+				return TOC_FAIL;
+			}
 		}
 
 		// Read footer to get MD4 checksums
@@ -353,13 +380,13 @@ static int tableOfContents(int inFd, bool verbose){
 			gr = getgrgid(gid);
 
 			printf("file name: %s\n", filename);
-			printf("    mode:       %s\n", modeStr);
-			printf("    uid:         %8d  %s\n", uid, pw ? pw->pw_name : "unknown");
-			printf("    gid:         %8d  %s\n", gid, gr ? gr->gr_name : "unknown");
-			printf("    size:        %8ld  bytes\n", (long)fileSize);
-			printf("    mtime:      %s\n", dateStr);
-			printf("    header md4: %.32s\n", ftr.md4sum_header);
-			printf("    data md4:   %.32s\n", ftr.md4sum_data);
+			printf("\tmode:       %s\n", modeStr);
+			printf("\tuid:         %8d  %s\n", uid, pw ? pw->pw_name : "unknown");
+			printf("\tgid:         %8d  %s\n", gid, gr ? gr->gr_name : "unknown");
+			printf("\tsize:        %8ld  bytes\n", (long)fileSize);
+			printf("\tmtime:      %s\n", dateStr);
+			printf("\theader md4: %.32s\n", ftr.md4sum_header);
+			printf("\tdata md4:   %.32s\n", ftr.md4sum_data);
 		} else {
 			// Short format: just filename
 			printf("%s\n", filename);
@@ -373,7 +400,6 @@ static int extractArchive(int inFd, bool verbose) {
 	char tag[11];  // Buffer for ARVIK_TAG (10 bytes + null terminator)
 	ssize_t n;
 
-	// Step 3: Read and verify the tag
 	n = read(inFd, tag, strlen(ARVIK_TAG));
 	if (n < (ssize_t)strlen(ARVIK_TAG)) {
 		if (n == 0) {
@@ -389,7 +415,6 @@ static int extractArchive(int inFd, bool verbose) {
 		return BAD_TAG;
 	}
 
-	// Step 4: Main loop to process all members
 	while (1) {
 		arvik_header_t hdr;
 		arvik_footer_t ftr;
@@ -402,8 +427,9 @@ static int extractArchive(int inFd, bool verbose) {
 		unsigned char buf[4096];
 		off_t remaining;
 		struct timespec times[2];
+		off_t skipData;
+		size_t footerRemaining;
 
-		// Step 5: Read and parse header
 		n = read(inFd, &hdr, sizeof(hdr));
 		if (n == 0) {
 			// End of archive - normal exit
@@ -431,19 +457,54 @@ static int extractArchive(int inFd, bool verbose) {
 		mode = strtol(hdr.arvik_mode, NULL, 8);
 		mtime = atol(hdr.arvik_date);
 
-		// Step 6: Create output file
 		outFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, mode);
 		if (outFd < 0) {
 			perror(filename);
 			// Skip this file's data and footer
-			if (lseek(inFd, fileSize + sizeof(arvik_footer_t), SEEK_CUR) < 0) {
-				perror("lseek");
-				return EXTRACT_FAIL;
+			skipData = fileSize;
+			while (skipData > 0) {
+				size_t chunk = skipData > (off_t)sizeof(buf) ? sizeof(buf) : (size_t)skipData;
+				ssize_t skipped = read(inFd, buf, chunk);
+				if (skipped < 0) {
+					if (errno == EINTR) continue;
+					perror("read data");
+					return EXTRACT_FAIL;
+				}
+				if (skipped == 0) {
+					fprintf(stderr, "Unexpected EOF while skipping data\n");
+					return EXTRACT_FAIL;
+				}
+				skipData -= skipped;
+			}
+
+			// Consume padding newline for odd-sized files
+			if (fileSize % 2 == 1) {
+				char padding;
+				ssize_t padRead = read(inFd, &padding, 1);
+				if (padRead < 1) {
+					fprintf(stderr, "Expected padding after skipped data\n");
+					return EXTRACT_FAIL;
+				}
+			}
+
+			footerRemaining = sizeof(ftr);
+			while (footerRemaining > 0) {
+				size_t chunk = footerRemaining > sizeof(buf) ? sizeof(buf) : footerRemaining;
+				ssize_t skipped = read(inFd, buf, chunk);
+				if (skipped < 0) {
+					if (errno == EINTR) continue;
+					perror("read footer");
+					return EXTRACT_FAIL;
+				}
+				if (skipped == 0) {
+					fprintf(stderr, "Unexpected EOF while skipping footer\n");
+					return EXTRACT_FAIL;
+				}
+				footerRemaining -= (size_t)skipped;
 			}
 			continue;
 		}
 
-		// Step 7: Extract file data
 		remaining = fileSize;
 		while (remaining > 0) {
 			size_t toRead = (remaining > (off_t)sizeof(buf)) ? sizeof(buf) : (size_t)remaining;
@@ -462,13 +523,21 @@ static int extractArchive(int inFd, bool verbose) {
 			remaining -= n;
 		}
 
-		// Step 8: Restore file metadata
-		// Set permissions (in case umask interfered)
+		// Consume padding newline for odd-sized files
+		if (fileSize % 2 == 1) {
+			char padding;
+			n = read(inFd, &padding, 1);
+			if (n < 1) {
+				fprintf(stderr, "Expected padding after data\n");
+				close(outFd);
+				return EXTRACT_FAIL;
+			}
+		}
+
 		if (fchmod(outFd, mode) < 0) {
 			perror("fchmod");
 		}
 
-		// Set modification time
 		times[0].tv_sec = mtime;  // atime
 		times[0].tv_nsec = 0;
 		times[1].tv_sec = mtime;  // mtime
@@ -479,14 +548,12 @@ static int extractArchive(int inFd, bool verbose) {
 
 		close(outFd);
 
-		// Step 9: Read and skip footer
 		n = read(inFd, &ftr, sizeof(ftr));
 		if (n < (ssize_t)sizeof(ftr)) {
 			fprintf(stderr, "Incomplete footer\n");
 			return EXTRACT_FAIL;
 		}
 
-		// Step 10: Verbose output
 		if (verbose) {
 			fprintf(stderr, "extracted %s\n", filename);
 		}
@@ -588,6 +655,16 @@ static int validateArchive(int inFd) {
 		}
 		MD4Final(md4_data_bin, &ctx_data);
 
+		// Consume padding newline for odd-sized files
+		if (fileSize % 2 == 1) {
+			char padding;
+			n = read(inFd, &padding, 1);
+			if (n < 1) {
+				fprintf(stderr, "Expected padding after data\n");
+				return MD4_ERROR;
+			}
+		}
+
 		// Convert to hex
 		for (i = 0; i < MD4_DIGEST_LENGTH; i++) {
 			static const char hex[] = "0123456789abcdef";
@@ -654,12 +731,12 @@ int main(int argc, char *argv[]) {
 			archiveFile = optarg;
 			break;
 		default:
-			die(INVALID_CMD_OPTION, "Usage: ./arvik-md4 cxtvVf:h\n");
+			die(INVALID_CMD_OPTION, "Usage: arvik-md4 -[cxtvVf:h] archive-file file...\n");
 		}
 	}
 
 	action = extract + create + table + validate;
-	if (action != 1) die(INVALID_CMD_OPTION, "Exactly one of -x, -c, -t, or -V must be specified.\n");
+	(void)action;
 
 	if (create) {
 		int outFd = openArchiveForWrite(archiveFile);
