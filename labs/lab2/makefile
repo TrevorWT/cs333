@@ -18,7 +18,7 @@ all: arvik-md4
 arvik-md4: arvik-md4.o
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-arvik-md4.o: arvik-md4.c header.h
+arvik-md4.o: arvik-md4.c arvik.h
 
 # --- housekeeping ---
 .PHONY: all clean

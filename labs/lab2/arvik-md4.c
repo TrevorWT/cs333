@@ -13,7 +13,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#include "header.h" // replace in final
+#include "arvik.h" // replace in final
 
 // -rw-rw-r--
 #ifndef ARVIK_CREATE_MODE
@@ -35,6 +35,13 @@ static int extractArchive(int inFd, bool verbose);
 static int validateArchive(int inFd);
 
 static void usage(const char *prog) {
+	const char *progName = prog;
+
+	/* Strip ./ prefix if present */
+	if (prog[0] == '.' && prog[1] == '/') {
+		progName = prog + 2;
+	}
+
 	fprintf(stdout,
 		"Usage: %s -[cxtvVf:h] archive-file file...\n"
 		"\t-c           create a new archive file\n"
@@ -44,7 +51,7 @@ static void usage(const char *prog) {
 		"\t-V           Validate the md4 values for the header and data\n"
 		"\t-v           verbose output\n"
 		"\t-h           show help text\n",
-		prog);
+		progName);
 
 	exit(EXIT_SUCCESS);
 }
