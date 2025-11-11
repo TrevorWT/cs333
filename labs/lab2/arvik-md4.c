@@ -697,26 +697,22 @@ static int validateArchive(int inFd) {
 
 int main(int argc, char *argv[]) {
   int opt;
-	bool extract = false;
-	bool create = false;
-	bool table = false;
-	bool validate = false;
 	bool verbose = false;
-	int action = 0;
 	char *archiveFile = NULL;
+	enum { NONE, EXTRACT, CREATE, TABLE, VALIDATE } lastAction = NONE;
 
 	if (argc < 2) die(NO_ACTION_GIVEN, "No action given.\n");
 
 	while ((opt = getopt(argc, argv, "xcthvVf:")) != -1) {
 		switch (opt) {
 		case 'x':
-			extract = true;
+			lastAction = EXTRACT;
 			break;
 		case 'c':
-			create = true;
+			lastAction = CREATE;
 			break;
 		case 't':
-			table = true;
+			lastAction = TABLE;
 			break;
 		case 'h':
 			usage(argv[0]);
@@ -725,7 +721,7 @@ int main(int argc, char *argv[]) {
 			verbose = true;
 			break;
 		case 'V':
-			validate = true;
+			lastAction = VALIDATE;
 			break;
 		case 'f':
 			archiveFile = optarg;
@@ -735,10 +731,42 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	action = extract + create + table + validate;
-	(void)action;
+	// When multiple actions are specified, execute the last one specified
 
-	if (create) {
+	if (lastAction == EXTRACT) {
+		int inFd = openArchiveForRead(archiveFile);
+		int rc;
+
+		if (inFd < 0) return EXTRACT_FAIL;
+		rc = extractArchive(inFd, verbose);
+
+		if (archiveFile && inFd >= 0) close(inFd);
+		return (rc == 0) ? EXIT_SUCCESS : rc;
+	}
+
+	if (lastAction == VALIDATE) {
+		int inFd = openArchiveForRead(archiveFile);
+		int rc;
+
+		if (inFd < 0) return MD4_ERROR;
+		rc = validateArchive(inFd);
+
+		if (archiveFile && inFd >= 0) close(inFd);
+		return (rc == 0) ? EXIT_SUCCESS : rc;
+	}
+
+	if (lastAction == TABLE) {
+		int inFd = openArchiveForRead(archiveFile);
+		int rc;
+
+		if (inFd < 0) return TOC_FAIL;
+		rc = tableOfContents(inFd, verbose);
+
+		if (archiveFile && inFd >= 0) close(inFd);
+		return (rc == 0) ? EXIT_SUCCESS : rc;
+	}
+
+	if (lastAction == CREATE) {
 		int outFd = openArchiveForWrite(archiveFile);
 		int memberCount;
 		char **members;
@@ -752,39 +780,6 @@ int main(int argc, char *argv[]) {
 
 		// Only close if it's not stdout
 		if (archiveFile && outFd >= 0) close(outFd);
-		return (rc == 0) ? EXIT_SUCCESS : rc;
-	}
-
-	if (table) {
-		int inFd = openArchiveForRead(archiveFile);
-		int rc;
-
-		if (inFd < 0) return TOC_FAIL;
-		rc = tableOfContents(inFd, verbose);
-
-		if (archiveFile && inFd >= 0) close(inFd);
-		return (rc == 0) ? EXIT_SUCCESS : rc;
-	}
-
-	if (extract) {
-		int inFd = openArchiveForRead(archiveFile);
-		int rc;
-
-		if (inFd < 0) return EXTRACT_FAIL;
-		rc = extractArchive(inFd, verbose);
-
-		if (archiveFile && inFd >= 0) close(inFd);
-		return (rc == 0) ? EXIT_SUCCESS : rc;
-	}
-
-	if (validate) {
-		int inFd = openArchiveForRead(archiveFile);
-		int rc;
-
-		if (inFd < 0) return MD4_ERROR;
-		rc = validateArchive(inFd);
-
-		if (archiveFile && inFd >= 0) close(inFd);
 		return (rc == 0) ? EXIT_SUCCESS : rc;
 	}
 

@@ -1,1 +1,0 @@
-/u/rchaney/Classes/cs333/Labs/Lab2/arvik-md4-test.bash
