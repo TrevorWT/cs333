@@ -1,2 +1,0 @@
-thread:  0     0.01 sec              DES:    20               NT:     0              MD5:     0           SHA256:     0           SHA512:     0         YESCRYPT:     0    GOST_YESCRYPT:     0           BCRYPT:     0  total:       20  failed:       20
-total:   1     0.01 sec              DES:    20               NT:     0              MD5:     0           SHA256:     0           SHA512:     0         YESCRYPT:     0    GOST_YESCRYPT:     0           BCRYPT:     0  total:       20  failed:       20
