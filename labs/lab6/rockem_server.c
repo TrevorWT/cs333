@@ -101,12 +101,10 @@ int main(int argc, char *argv[]) {
         char hostname[256] = {'\0'};
         struct hostent *host_entry = NULL;
         char *IPbuffer = NULL;
-
         memset(hostname, 0, sizeof(hostname));
         gethostname(hostname, sizeof(hostname));
         host_entry = gethostbyname(hostname);
         IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
-
         fprintf(stdout, "Hostname: %s\n", hostname);
         fprintf(stdout, "IP:       %s\n", IPbuffer);
         fprintf(stdout, "Port:     %d\n", ip_port);
@@ -132,16 +130,14 @@ int main(int argc, char *argv[]) {
             close(sockfd);
         }
         else {
-            if (is_verbose)
-                fprintf(stdout, "Connection from client: <%s>\n", buf);
+            if (is_verbose) fprintf(stdout, "Connection from client: <%s>\n", buf);
             process_connection(sockfd, buf, n);
         }
-    }
 
     printf("Closing listen socket\n");
     close(listenfd);
-
     return(EXIT_SUCCESS);
+    }
 }
 
 void process_connection(int sockfd, void *buf, int n) {
@@ -149,14 +145,12 @@ void process_connection(int sockfd, void *buf, int n) {
     int ret;
     pthread_t tid;
     pthread_attr_t attr;
-
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     memcpy(cmd, buf, sizeof(cmd_t));
     cmd->sock = sockfd;
-    if (is_verbose)
-        fprintf(stderr, "Request from client: <%s> <%s>\n", cmd->cmd, cmd->name);
+    if (is_verbose) fprintf(stderr, "Request from client: <%s> <%s>\n", cmd->cmd, cmd->name);
 
     if (strcmp(cmd->cmd, CMD_GET) == 0) {
         ret = pthread_create(&tid, &attr, thread_get, (void *) cmd);
@@ -187,14 +181,12 @@ void process_connection(int sockfd, void *buf, int n) {
         close(sockfd);
         free(cmd);
     }
-
     pthread_attr_destroy(&attr);
 }
 
 void *server_commands(void *p) {
     char cmd[80] = {'\0'};
     char *ret_val = NULL;
-
     pthread_detach(pthread_self());
 
     server_help();
@@ -236,7 +228,6 @@ void *server_commands(void *p) {
             printf("command not recognized >>%s<<\n", cmd);
         }
     }
-
     exit(EXIT_SUCCESS);
 }
 
@@ -266,7 +257,6 @@ void *thread_get(void *p) {
     int fd = 0;
     ssize_t bytes_read = 0;
     char buffer[MAXLINE] = {'\0'};
-
     current_connections_inc();
 
     if (is_verbose)
@@ -294,9 +284,7 @@ void *thread_get(void *p) {
     close(fd);
     close(cmd->sock);
     free(cmd);
-
     current_connections_dec();
-
     pthread_exit((void *) EXIT_SUCCESS);
 }
 
@@ -305,7 +293,6 @@ void *thread_put(void *p) {
     int fd = 0;
     ssize_t bytes_read = 0;
     char buffer[MAXLINE] = {'\0'};
-
     current_connections_inc();
 
     if (is_verbose)
@@ -329,13 +316,10 @@ void *thread_put(void *p) {
         if (usleep_time > 0) usleep(usleep_time);
         memset(buffer, 0, sizeof(buffer));
     }
-
     close(fd);
     close(cmd->sock);
     free(cmd);
-
     current_connections_dec();
-
     pthread_exit((void *) EXIT_SUCCESS);
 }
 
