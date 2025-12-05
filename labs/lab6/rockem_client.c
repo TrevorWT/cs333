@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -10,6 +11,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <getopt.h>
 #include "rockem_hdr.h"
 
 static short is_verbose = 0;

@@ -1,3 +1,21 @@
 **/target/
 *.gz
 **/.vscode/
+
+# Ignore compiled binaries
+*.o
+*.so
+*.a
+rockem_server
+rockem_client
+
+# Ignore large test/data files
+*.dat
+*.bin
+*.tar
+*.tar.gz
+*.zip
+
+# Ignore test output
+test_*.txt
+*_output.txt

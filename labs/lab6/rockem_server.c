@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -10,6 +11,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <getopt.h>
 #include "rockem_hdr.h"
 
 #define LISTENQ 100
@@ -105,9 +107,9 @@ int main(int argc, char *argv[]) {
         gethostname(hostname, sizeof(hostname));
         host_entry = gethostbyname(hostname);
         IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
-        fprintf(stdout, "Hostname: %s\n", hostname);
-        fprintf(stdout, "IP:       %s\n", IPbuffer);
-        fprintf(stdout, "Port:     %d\n", ip_port);
+        fprintf(stdout, "Hostname:   %s\n", hostname);
+        fprintf(stdout, "IP:         %s\n", IPbuffer);
+        fprintf(stdout, "Port:       %d\n", ip_port);
 		fprintf(stdout, "verbose     %d\n", is_verbose);
 		fprintf(stdout, "usleep_time %d\n", usleep_time);
     }
@@ -133,11 +135,11 @@ int main(int argc, char *argv[]) {
             if (is_verbose) fprintf(stdout, "Connection from client: <%s>\n", buf);
             process_connection(sockfd, buf, n);
         }
+    }
 
     printf("Closing listen socket\n");
     close(listenfd);
     return(EXIT_SUCCESS);
-    }
 }
 
 void process_connection(int sockfd, void *buf, int n) {
@@ -147,6 +149,11 @@ void process_connection(int sockfd, void *buf, int n) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+    if (n != sizeof(cmd_t)) {
+        fprintf(stderr, "Incomplete command received\n");
+        return;
+    }
 
     memcpy(cmd, buf, sizeof(cmd_t));
     cmd->sock = sockfd;
@@ -184,7 +191,7 @@ void process_connection(int sockfd, void *buf, int n) {
     pthread_attr_destroy(&attr);
 }
 
-void *server_commands(void *p) {
+void *server_commands(void *p __attribute__((unused))) {
     char cmd[80] = {'\0'};
     char *ret_val = NULL;
     pthread_detach(pthread_self());
@@ -236,9 +243,9 @@ void server_help(void) {
     printf("\t%s : show the total connection count "
            "and number current connection\n"
            , SERVER_CMD_COUNT);
-    printf("\t%s    : increment the is_verbose flag (current %d)\n"
+    printf("\t%s    : increment the is_verbose value (current %d)\n"
            , SERVER_CMD_VPLUS, is_verbose);
-    printf("\t%s    : decrement the is_verbose flag (current %d)\n"
+    printf("\t%s    : decrement the is_verbose value (current %d)\n"
            , SERVER_CMD_VMINUS, is_verbose);
 
     printf("\t%s    : increment the usleep_time variable (by %d, currently %d)\n"
