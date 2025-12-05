@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 199309L
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,11 +12,14 @@
 
 typedef struct {
     int threadId;
-    char *threadHash;
+    char **hashes;
+    size_t *currentHash;
+    size_t hashCount;
     char **dict;
     size_t dictCount;
     FILE *outFile;
     pthread_mutex_t *outMutex;
+    pthread_mutex_t *workMutex;
 
     double timeSec;
     int total;
@@ -34,7 +37,6 @@ typedef struct {
 typedef struct {
     pthread_t *threads;
     thread_data_t *threadData;
-    thread_data_t *allThreadData;
     char *hashBuffer;
     char *dictBuffer;
     char **hashes;
@@ -117,7 +119,6 @@ static void identifyHashType(const char* hash, thread_data_t* data) {
 static void cleanup(cleanup_data_t *data) {
     if (data->threads) free(data->threads);
     if (data->threadData) free(data->threadData);
-    if (data->allThreadData) free(data->allThreadData);
     if (data->passwords) free(data->passwords);
     if (data->dictBuffer) free(data->dictBuffer);
     if (data->hashes) free(data->hashes);
@@ -126,37 +127,61 @@ static void cleanup(cleanup_data_t *data) {
 
 void* checkPasswords(void* arg) {
     thread_data_t* tdata = (thread_data_t*)arg;
-    struct crypt_data data;
+    struct crypt_data cryptData;
     char *result = NULL;
     struct timespec start, end;
-    int found = 0;
-    memset(&data, 0, sizeof(data));
+    size_t myHashIndex;
+    char *currentHashStr;
+    int wordsHashed;
+    int found;
 
-    tdata->total = 1;
+    memset(&cryptData, 0, sizeof(cryptData));
+    tdata->total = 0;
     tdata->failed = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    identifyHashType(tdata->threadHash, tdata);
 
-    for (size_t i = 0; i < tdata->dictCount; i++) {
-        result = crypt_rn(tdata->dict[i], tdata->threadHash, &data, sizeof(data));
-        if (result == NULL) {
-            continue;
-        }
-        if (strcmp(result, tdata->threadHash) == 0) {
-            pthread_mutex_lock(tdata->outMutex);
-            fprintf(tdata->outFile, "cracked  %s  %s\n", tdata->dict[i], tdata->threadHash);
-            pthread_mutex_unlock(tdata->outMutex);
-            found = 1;
+    /* Dynamic load balancing: each thread grabs the next available hash */
+    while (1) {
+        pthread_mutex_lock(tdata->workMutex);
+        if (*(tdata->currentHash) >= tdata->hashCount) {
+            pthread_mutex_unlock(tdata->workMutex);
             break;
         }
-    }
+        myHashIndex = *(tdata->currentHash);
+        (*(tdata->currentHash))++;
+        pthread_mutex_unlock(tdata->workMutex);
 
-    if (!found) {
-        pthread_mutex_lock(tdata->outMutex);
-        fprintf(tdata->outFile, "*** failed to crack  %s\n", tdata->threadHash);
-        pthread_mutex_unlock(tdata->outMutex);
-        tdata->failed++;
+        currentHashStr = tdata->hashes[myHashIndex];
+        identifyHashType(currentHashStr, tdata);
+        found = 0;
+        wordsHashed = 0;
+
+        /* Try each dictionary word against this hash */
+        for (size_t i = 0; i < tdata->dictCount; i++) {
+            result = crypt_rn(tdata->dict[i], currentHashStr, &cryptData, sizeof(cryptData));
+            wordsHashed++;
+            if (result == NULL) {
+                continue;
+            }
+            if (strcmp(result, currentHashStr) == 0) {
+                pthread_mutex_lock(tdata->outMutex);
+                fprintf(tdata->outFile, "cracked  %s  %s\n", tdata->dict[i], currentHashStr);
+                pthread_mutex_unlock(tdata->outMutex);
+                found = 1;
+                break;
+            }
+        }
+
+        /* Count this hash as processed */
+        tdata->total++;
+
+        if (!found) {
+            pthread_mutex_lock(tdata->outMutex);
+            fprintf(tdata->outFile, "*** failed to crack  %s\n", currentHashStr);
+            pthread_mutex_unlock(tdata->outMutex);
+            tdata->failed++;
+        }
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -176,7 +201,6 @@ int main(int argc, char **argv) {
     int opt;
     size_t threadCount = 1;
     size_t currHash = 0;
-    size_t batchSize = 0;
     size_t hashSize, dictSize;
     size_t hashCount, dictCount;
     FILE *hashFile = NULL;
@@ -184,8 +208,8 @@ int main(int argc, char **argv) {
     FILE *outFile = NULL;
     pthread_t *threads;
     thread_data_t *threadData;
-    thread_data_t *allThreadData;
     pthread_mutex_t outMutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t workMutex = PTHREAD_MUTEX_INITIALIZER;
     cleanup_data_t cleanupData = {0};
 
     double totalTime = 0;
@@ -200,20 +224,20 @@ int main(int argc, char **argv) {
         else if (opt == 'd') dict = optarg;
         else if (opt == 't') {
             threadCount = atoi(optarg);
-            if (threadCount < 1 || threadCount > 40) threadCount = 1;
+            if (threadCount < 1 || threadCount > 120) threadCount = 1;
         }
         else if (opt == 'v') verbose = 1;
-        else if (opt == 'n') setpriority(PRIO_PROCESS, 0, 10) ;
+        else if (opt == 'n') { int ret = nice(10); (void)ret; }
         else if (opt == 'h') {
-            printf("./thread_hash ...\n");
-            printf("Options: i:o:d:hvt:n\n");
-            printf("        -i file         hash file name (required)\n");
-            printf("        -o file         output file name (default stdout)\n");
-            printf("        -d file         dictionary file name (required)\n");
-            printf("        -t #            number of threads to create (default == 1)\n");
-            printf("        -n              renice to 10\n");
-            printf("        -v              enable verbose mode\n");
-            printf("        -h              helpful text\n");
+            fprintf(stderr, "./thread_hash ...\n");
+            fprintf(stderr, "Options: i:o:d:hvt:n\n");
+            fprintf(stderr, "        -i file         hash file name (required)\n");
+            fprintf(stderr, "        -o file         output file name (default stdout)\n");
+            fprintf(stderr, "        -d file         dictionary file name (required)\n");
+            fprintf(stderr, "        -t #            number of threads to create (default == 1)\n");
+            fprintf(stderr, "        -n              renice to 10\n");
+            fprintf(stderr, "        -v              enable verbose mode\n");
+            fprintf(stderr, "        -h              helpful text\n");
             return 0;
         }
     }
@@ -284,16 +308,6 @@ int main(int argc, char **argv) {
     }
     cleanupData.hashes = hashes;
 
-    allThreadData = malloc(threadCount * sizeof(thread_data_t));
-    if (!allThreadData) {
-        fprintf(stderr, "Error: failed to allocate memory for thread summary data\n");
-        cleanup(&cleanupData);
-        return 1;
-    }
-    cleanupData.allThreadData = allThreadData;
-
-    memset(allThreadData, 0, threadCount * sizeof(thread_data_t));
-
     if (outputFile) {
         outFile = fopen(outputFile, "w");
         if (!outFile) {
@@ -314,79 +328,68 @@ int main(int argc, char **argv) {
         fprintf(stderr, "  Dict file:  %s\n\n", dict);
     }
 
-    while (currHash < hashCount) {
+    /* Create threads once - they will dynamically pull work */
+    currHash = 0;
+
+    for (size_t i = 0; i < threadCount; i++) {
         int ret;
-        batchSize = threadCount;
-        if (hashCount - currHash < threadCount) {
-            batchSize = hashCount - currHash;
-        }
+        memset(&threadData[i], 0, sizeof(thread_data_t));
+        threadData[i].threadId = i;
+        threadData[i].hashes = hashes;
+        threadData[i].currentHash = &currHash;
+        threadData[i].hashCount = hashCount;
+        threadData[i].dict = passwords;
+        threadData[i].dictCount = dictCount;
+        threadData[i].outFile = outFile;
+        threadData[i].outMutex = &outMutex;
+        threadData[i].workMutex = &workMutex;
 
-        for (size_t i = 0; i < batchSize; i++) {
-            memset(&threadData[i], 0, sizeof(thread_data_t));
-            threadData[i].threadId = i;
-            threadData[i].threadHash = hashes[currHash];
-            threadData[i].dict = passwords;
-            threadData[i].dictCount = dictCount;
-            threadData[i].outFile = outFile;
-            threadData[i].outMutex = &outMutex;
-
-            ret = pthread_create(&threads[i], NULL, checkPasswords, &threadData[i]);
-            if (ret != 0) {
-                fprintf(stderr, "Error creating thread %zu: %s\n", i, strerror(ret));
-                exit(1);
-            }
-            currHash++;
-        }
-
-        for (size_t i = 0; i < batchSize; i++) {
-            ret = pthread_join(threads[i], NULL);
-            if (ret != 0) {
-                fprintf(stderr, "Error joining thread %zu: %s\n", i, strerror(ret));
-                exit(1);
-            }
-            if (allThreadData[i].timeSec < threadData[i].timeSec) allThreadData[i].timeSec = threadData[i].timeSec;
-
-            allThreadData[i].desCount += threadData[i].desCount;
-            allThreadData[i].ntCount += threadData[i].ntCount;
-            allThreadData[i].md5Count += threadData[i].md5Count;
-            allThreadData[i].sha256Count += threadData[i].sha256Count;
-            allThreadData[i].sha512Count += threadData[i].sha512Count;
-            allThreadData[i].yescryptCount += threadData[i].yescryptCount;
-            allThreadData[i].gostYescryptCount += threadData[i].gostYescryptCount;
-            allThreadData[i].bcryptCount += threadData[i].bcryptCount;
-            allThreadData[i].total += threadData[i].total;
-            allThreadData[i].failed += threadData[i].failed;
-            allThreadData[i].threadId = i;
+        ret = pthread_create(&threads[i], NULL, checkPasswords, &threadData[i]);
+        if (ret != 0) {
+            fprintf(stderr, "Error creating thread %zu: %s\n", i, strerror(ret));
+            exit(1);
         }
     }
 
+    /* Wait for all threads to complete */
+    for (size_t i = 0; i < threadCount; i++) {
+        int ret = pthread_join(threads[i], NULL);
+        if (ret != 0) {
+            fprintf(stderr, "Error joining thread %zu: %s\n", i, strerror(ret));
+            exit(1);
+        }
+    }
+
+    pthread_mutex_destroy(&workMutex);
+
+    /* Print per-thread statistics */
     for (size_t i = 0; i < threadCount; i++) {
         fprintf(stderr, "thread: %2d  %7.2f sec              DES: %5d               NT: %5d              MD5: %5d           SHA256: %5d           SHA512: %5d         YESCRYPT: %5d    GOST_YESCRYPT: %5d           BCRYPT: %5d  total: %8d  failed: %8d\n",
-            allThreadData[i].threadId,
-            allThreadData[i].timeSec,
-            allThreadData[i].desCount,
-            allThreadData[i].ntCount,
-            allThreadData[i].md5Count,
-            allThreadData[i].sha256Count,
-            allThreadData[i].sha512Count,
-            allThreadData[i].yescryptCount,
-            allThreadData[i].gostYescryptCount,
-            allThreadData[i].bcryptCount,
-            allThreadData[i].total,
-            allThreadData[i].failed
+            threadData[i].threadId,
+            threadData[i].timeSec,
+            threadData[i].desCount,
+            threadData[i].ntCount,
+            threadData[i].md5Count,
+            threadData[i].sha256Count,
+            threadData[i].sha512Count,
+            threadData[i].yescryptCount,
+            threadData[i].gostYescryptCount,
+            threadData[i].bcryptCount,
+            threadData[i].total,
+            threadData[i].failed
         );
 
-        if (allThreadData[i].timeSec > totalTime) totalTime = allThreadData[i].timeSec;
-        totalDes += allThreadData[i].desCount;
-        totalNt += allThreadData[i].ntCount;
-        totalMd5 += allThreadData[i].md5Count;
-        totalSha256 += allThreadData[i].sha256Count;
-        totalSha512 += allThreadData[i].sha512Count;
-        totalYescrypt += allThreadData[i].yescryptCount;
-        totalGost += allThreadData[i].gostYescryptCount;
-        totalBcrypt += allThreadData[i].bcryptCount;
-        totalHashes += allThreadData[i].total;
-        totalFailed += allThreadData[i].failed;
+        if (threadData[i].timeSec > totalTime) totalTime = threadData[i].timeSec;
+        totalDes += threadData[i].desCount;
+        totalNt += threadData[i].ntCount;
+        totalMd5 += threadData[i].md5Count;
+        totalSha256 += threadData[i].sha256Count;
+        totalSha512 += threadData[i].sha512Count;
+        totalYescrypt += threadData[i].yescryptCount;
+        totalGost += threadData[i].gostYescryptCount;
+        totalBcrypt += threadData[i].bcryptCount;
+        totalHashes += threadData[i].total;
+        totalFailed += threadData[i].failed;
     }
 
     fprintf(stderr, "total:  %2zu  %7.2f sec              DES: %5d               NT: %5d              MD5: %5d           SHA256: %5d           SHA512: %5d         YESCRYPT: %5d    GOST_YESCRYPT: %5d           BCRYPT: %5d  total: %8d  failed: %8d\n",
